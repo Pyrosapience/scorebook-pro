@@ -16,12 +16,30 @@ string intACadena(int num) {
 void crearTablas() {
     string sqlStudents = "CREATE TABLE IF NOT EXISTS students (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);";
     string sqlCourses = "CREATE TABLE IF NOT EXISTS courses (id INTEGER PRIMARY KEY, title TEXT, code TEXT);";
+    string sqlGrades = R"(CREATE TABLE IF NOT EXISTS grades (
+        student_id INTEGER,
+        course_id INTEGER,
+        semester INTEGER,
+        lab1 INTEGER,
+        lab2 INTEGER,
+        lab3 INTEGER,
+        lab4 INTEGER,
+        exam1 INTEGER,
+        exam2 INTEGER,
+        exam3 INTEGER,
+        exam4 INTEGER,
+        PRIMARY KEY (student_id, course_id, semester),
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        FOREIGN KEY (course_id) REFERENCES courses(id)
+    );)";
     
     string comandoStudents = "sqlite3 scorebook_pro.db \"" + sqlStudents + "\"";
     string comandoCourses = "sqlite3 scorebook_pro.db \"" + sqlCourses + "\"";
-    
+    string comandoGrades = "sqlite3 scorebook_pro.db \"" + sqlGrades + "\"";
+
     system(comandoStudents.c_str());
     system(comandoCourses.c_str());
+    system(comandoGrades.c_str());
 }
 
 // Funcion para verificar si el ID del estudiante ya existe
@@ -32,11 +50,11 @@ bool existeEstudiante(int id) {
     
     char buffer[128];
     string result = "";
-    while (fgets(buffer, sizeof(buffer), pipe) != NULL) { // Replace nullptr with NULL
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
         result += buffer;
     }
     pclose(pipe);
-    return atoi(result.c_str()) > 0; // Usar atoi para convertir cadena a entero
+    return atoi(result.c_str()) > 0;
 }
 
 // Funcion para agregar un estudiante a la base de datos
@@ -49,13 +67,11 @@ void agregarEstudiante() {
     cin >> id;
     cin.ignore();
 
-    // Verificar que el ID no exceda 7 digitos
     if (intACadena(id).length() > 7) {
         cout << "El ID no puede exceder 7 digitos.\n";
         return;
     }
 
-    // Verificar si el estudiante ya existe
     if (existeEstudiante(id)) {
         cout << "Ya existe un estudiante con el ID " << id << ".\n";
         return;
@@ -94,19 +110,17 @@ void agregarCurso() {
     cin >> id;
     cin.ignore();
 
-    // Verificar que el ID no exceda 7 d�gitos
     if (intACadena(id).length() > 7) {
         cout << "El ID no puede exceder 7 digitos.\n";
         return;
     }
 
-    string sql = "INSERT INTO courses (id, title, code) VALUES (" + intACadena(id) + ", '";
     cout << "Ingrese el titulo del curso: ";
     getline(cin, titulo);
     cout << "Ingrese el codigo del curso: ";
     getline(cin, codigoCurso);
     
-    sql += titulo + "', '" + codigoCurso + "');";
+    string sql = "INSERT INTO courses (id, title, code) VALUES (" + intACadena(id) + ", '" + titulo + "', '" + codigoCurso + "');";
     string comando = "sqlite3 scorebook_pro.db \"" + sql + "\"";
     system(comando.c_str());
 
@@ -124,74 +138,71 @@ void verCurso() {
     system(comando.c_str());
 }
 
-// Funcion para actualizar la informacion de un estudiante
-void actualizarEstudiante() {
-    int id;
-    string nombre;
-    int edad;
-    cout << "Ingrese el ID del estudiante a actualizar: ";
-    cin >> id;
-    cin.ignore();
-    cout << "Ingrese el nuevo nombre: ";
-    getline(cin, nombre);
-    cout << "Ingrese la nueva edad: ";
-    cin >> edad;
-    cin.ignore();
-
-    string sql = "UPDATE students SET name = '" + nombre + "', age = " + intACadena(edad) + " WHERE id = " + intACadena(id) + ";";
-    string comando = "sqlite3 scorebook_pro.db \"" + sql + "\"";
+// Funcion para ver todos los cursos disponibles
+void verCursosDisponibles() {
+    cout << "\n--- Cursos Disponibles ---\n";
+    string comando = "sqlite3 scorebook_pro.db \"SELECT id, title, code FROM courses;\"";
     system(comando.c_str());
-
-    cout << "Estudiante actualizado exitosamente con ID " << id << ".\n";
 }
 
-// Funcion para actualizar la informacion de un curso
-void actualizarCurso() {
-    int id;
-    string titulo, codigoCurso;
-    cout << "Ingrese el ID del curso a actualizar: ";
-    cin >> id;
-    cin.ignore();
-    cout << "Ingrese el nuevo titulo: ";
-    getline(cin, titulo);
-    cout << "Ingrese el nuevo codigo del curso: ";
-    getline(cin, codigoCurso);
+// Funcion para asignar un curso a un estudiante
+void asignarCurso() {
+    int studentId, courseId, semester;
+    int labs[4], exams[4];
 
-    string sql = "UPDATE courses SET title = '" + titulo + "', code = '" + codigoCurso + "' WHERE id = " + intACadena(id) + ";";
-    string comando = "sqlite3 scorebook_pro.db \"" + sql + "\"";
-    system(comando.c_str());
-
-    cout << "Curso actualizado exitosamente con ID " << id << ".\n";
-}
-
-// Funcion para eliminar un estudiante de la base de datos
-void eliminarEstudiante() {
-    int id;
-    cout << "Ingrese el ID del estudiante a eliminar: ";
-    cin >> id;
+    cout << "Ingrese el ID del estudiante: ";
+    cin >> studentId;
     cin.ignore();
 
-    string sql = "DELETE FROM students WHERE id = " + intACadena(id) + ";";
-    string comando = "sqlite3 scorebook_pro.db \"" + sql + "\"";
-    system(comando.c_str());
-
-    cout << "Estudiante eliminado exitosamente con ID " << id << ".\n";
-}
-
-// Funcion para eliminar un curso de la base de datos
-void eliminarCurso() {
-    int id;
-    cout << "Ingrese el ID del curso a eliminar: ";
-    cin >> id;
+    cout << "Ingrese el ID del curso: ";
+    cin >> courseId;
     cin.ignore();
 
-    string sql = "DELETE FROM courses WHERE id = " + intACadena(id) + ";";
-    string comando = "sqlite3 scorebook_pro.db \"" + sql + "\"";
-    system(comando.c_str());
+    cout << "Ingrese el semestre: ";
+    cin >> semester;
+    cin.ignore();
 
-    cout << "Curso eliminado exitosamente con ID " << id << ".\n";
+    cout << "Ingrese las calificaciones para los 4 laboratorios:\n";
+    for (int i = 0; i < 4; i++) {
+        cout << "Lab " << i + 1 << ": ";
+        cin >> labs[i];
+    }
+
+    cout << "Ingrese las calificaciones para los 4 examenes parciales:\n";
+    for (int i = 0; i < 4; i++) {
+        cout << "Examen " << i + 1 << ": ";
+        cin >> exams[i];
+    }
+
+    string sql = "INSERT INTO grades (student_id, course_id, semester, lab1, lab2, lab3, lab4, exam1, exam2, exam3, exam4) VALUES (" +
+                 intACadena(studentId) + ", " + intACadena(courseId) + ", " + intACadena(semester) + ", " +
+                 intACadena(labs[0]) + ", " + intACadena(labs[1]) + ", " + intACadena(labs[2]) + ", " + intACadena(labs[3]) + ", " +
+                 intACadena(exams[0]) + ", " + intACadena(exams[1]) + ", " + intACadena(exams[2]) + ", " + intACadena(exams[3]) + ");";
+    string comando = "sqlite3 scorebook_pro.db \"" + sql + "\"";
+
+    system(comando.c_str());
+    cout << "Curso asignado y calificaciones registradas correctamente.\n";
 }
 
+// Funcion para ver calificaciones por estudiante y semestre
+void verCalificaciones() {
+    int studentId, semester;
+
+    cout << "Ingrese el ID del estudiante: ";
+    cin >> studentId;
+    cin.ignore();
+
+    cout << "Ingrese el semestre: ";
+    cin >> semester;
+    cin.ignore();
+
+    string comando = "sqlite3 scorebook_pro.db \"SELECT course_id, lab1, lab2, lab3, lab4, exam1, exam2, exam3, exam4 FROM grades WHERE student_id = " +
+                     intACadena(studentId) + " AND semester = " + intACadena(semester) + ";\"";
+
+    system(comando.c_str());
+}
+
+// Funcion principal
 int main() {
     crearTablas(); // Crear tablas al iniciar el programa
     int opcion;
@@ -199,13 +210,12 @@ int main() {
         cout << "\n--- Sistema de Gestion Escolar Scorebook Pro ---\n";
         cout << "1. Agregar Estudiante\n";
         cout << "2. Ver Estudiante\n";
-        cout << "3. Actualizar Estudiante\n";
-        cout << "4. Eliminar Estudiante\n";
-        cout << "5. Agregar Curso\n";
-        cout << "6. Ver Curso\n";
-        cout << "7. Actualizar Curso\n";
-        cout << "8. Eliminar Curso\n";
-        cout << "9. Salir\n";
+        cout << "3. Agregar Curso\n";
+        cout << "4. Ver Curso\n";
+        cout << "5. Ver Cursos Disponibles\n";
+        cout << "6. Asignar Curso a Estudiante\n";
+        cout << "7. Ver Calificaciones\n";
+        cout << "8. Salir\n";
         cout << "Ingrese una opcion: ";
         cin >> opcion;
         cin.ignore();
@@ -213,16 +223,14 @@ int main() {
         switch (opcion) {
             case 1: agregarEstudiante(); break;
             case 2: verEstudiante(); break;
-            case 3: actualizarEstudiante(); break;
-            case 4: eliminarEstudiante(); break;
-            case 5: agregarCurso(); break;
-            case 6: verCurso(); break;
-            case 7: actualizarCurso(); break;
-            case 8: eliminarCurso(); break;
-            case 9: exit(0);
+            case 3: agregarCurso(); break;
+            case 4: verCurso(); break;
+            case 5: verCursosDisponibles(); break;
+            case 6: asignarCurso(); break;
+            case 7: verCalificaciones(); break;
+            case 8: exit(0);
             default: cout << "Opcion no valida.\n"; break;
         }
     }
     return 0;
 }
-
