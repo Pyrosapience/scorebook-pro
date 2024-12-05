@@ -5,7 +5,7 @@
 
 using namespace std;
 
-// Funcion para convertir un entero a cadena (sin usar C++11)
+// Funcion para convertir un entero a un string
 string intACadena(int num) {
     char buffer[20]; // Buffer para almacenar el numero como cadena
     sprintf(buffer, "%d", num); // Convertir el entero a cadena
@@ -90,15 +90,52 @@ void agregarEstudiante() {
     cout << "Estudiante agregado exitosamente con ID " << id << ".\n";
 }
 
-// Funcion para ver un estudiante especifico por ID
+// Funcion para ver un estudiante especifico por ID, junto con sus cursos y calificaciones
 void verEstudiante() {
     int id;
     cout << "Ingrese el ID del estudiante a ver: ";
     cin >> id;
     cin.ignore();
 
-    string comando = "sqlite3 scorebook_pro.db \"SELECT * FROM students WHERE id = " + intACadena(id) + ";\"";
-    system(comando.c_str());
+    // Mostrar la información básica del estudiante
+    string comandoEstudiante = "sqlite3 scorebook_pro.db \"SELECT * FROM students WHERE id = " + intACadena(id) + ";\"";
+    cout << "\n--- Informacion del Estudiante ---\n";
+    system(comandoEstudiante.c_str());
+
+    // Mostrar los cursos asignados al estudiante con sus calificaciones
+    string comandoCursos = "sqlite3 scorebook_pro.db \"SELECT c.title, g.semester, g.lab1, g.lab2, g.lab3, g.lab4, g.exam1, g.exam2, g.exam3, g.exam4 FROM courses c JOIN grades g ON c.id = g.course_id WHERE g.student_id = " + intACadena(id) + ";\"";
+    FILE* pipe = popen(comandoCursos.c_str(), "r");
+    if (!pipe) {
+        cout << "Error al ejecutar el comando.\n";
+        return;
+    }
+
+    char buffer[256];
+    string result = "";
+    cout << "\n--- Cursos Asignados y Calificaciones ---\n";
+    cout << "Curso | Semestre | Lab1 | Lab2 | Lab3 | Lab4 | Exam1 | Exam2 | Exam3 | Exam4 | Promedio | Estado\n";
+
+    while (fgets(buffer, sizeof(buffer), pipe) != NULL) {
+        result = buffer;
+
+        // Parsear los resultados para extraer las calificaciones
+        char curso[50];
+        int semestre, lab1, lab2, lab3, lab4, exam1, exam2, exam3, exam4;
+        sscanf(result.c_str(), "%[^|]|%d|%d|%d|%d|%d|%d|%d|%d|%d",
+               curso, &semestre, &lab1, &lab2, &lab3, &lab4, &exam1, &exam2, &exam3, &exam4);
+
+        // Calcular el promedio
+        double promedio = (lab1 + lab2 + lab3 + lab4 + exam1 + exam2 + exam3 + exam4) / 8.0;
+
+        // Determinar el estado del estudiante (Aprobado o Reprobado)
+        string estado = (promedio >= 6.0) ? "Aprobado" : "Reprobado";
+
+        // Mostrar la información
+        cout << curso << " | " << semestre << " | " << lab1 << " | " << lab2 << " | " << lab3 << " | " << lab4
+             << " | " << exam1 << " | " << exam2 << " | " << exam3 << " | " << exam4
+             << " | " << promedio << " | " << estado << "\n";
+    }
+    pclose(pipe);
 }
 
 // Funcion para agregar un curso a la base de datos
@@ -125,17 +162,6 @@ void agregarCurso() {
     system(comando.c_str());
 
     cout << "Curso agregado exitosamente con ID " << id << ".\n";
-}
-
-// Funcion para ver un curso especifico por ID
-void verCurso() {
-    int id;
-    cout << "Ingrese el ID del curso a ver: ";
-    cin >> id;
-    cin.ignore();
-
-    string comando = "sqlite3 scorebook_pro.db \"SELECT * FROM courses WHERE id = " + intACadena(id) + ";\"";
-    system(comando.c_str());
 }
 
 // Funcion para ver todos los cursos disponibles
@@ -184,24 +210,6 @@ void asignarCurso() {
     cout << "Curso asignado y calificaciones registradas correctamente.\n";
 }
 
-// Funcion para ver calificaciones por estudiante y semestre
-void verCalificaciones() {
-    int studentId, semester;
-
-    cout << "Ingrese el ID del estudiante: ";
-    cin >> studentId;
-    cin.ignore();
-
-    cout << "Ingrese el semestre: ";
-    cin >> semester;
-    cin.ignore();
-
-    string comando = "sqlite3 scorebook_pro.db \"SELECT course_id, lab1, lab2, lab3, lab4, exam1, exam2, exam3, exam4 FROM grades WHERE student_id = " +
-                     intACadena(studentId) + " AND semester = " + intACadena(semester) + ";\"";
-
-    system(comando.c_str());
-}
-
 // Funcion principal
 int main() {
     crearTablas(); // Crear tablas al iniciar el programa
@@ -211,11 +219,9 @@ int main() {
         cout << "1. Agregar Estudiante\n";
         cout << "2. Ver Estudiante\n";
         cout << "3. Agregar Curso\n";
-        cout << "4. Ver Curso\n";
-        cout << "5. Ver Cursos Disponibles\n";
-        cout << "6. Asignar Curso a Estudiante\n";
-        cout << "7. Ver Calificaciones\n";
-        cout << "8. Salir\n";
+        cout << "4. Ver Cursos Disponibles\n";
+        cout << "5. Asignar Curso a Estudiante\n";
+        cout << "6. Salir\n";
         cout << "Ingrese una opcion: ";
         cin >> opcion;
         cin.ignore();
@@ -224,11 +230,9 @@ int main() {
             case 1: agregarEstudiante(); break;
             case 2: verEstudiante(); break;
             case 3: agregarCurso(); break;
-            case 4: verCurso(); break;
-            case 5: verCursosDisponibles(); break;
-            case 6: asignarCurso(); break;
-            case 7: verCalificaciones(); break;
-            case 8: exit(0);
+            case 4: verCursosDisponibles(); break;
+            case 5: asignarCurso(); break;
+            case 6: exit(0);
             default: cout << "Opcion no valida.\n"; break;
         }
     }
