@@ -1,3 +1,15 @@
+/*
+ * Autor: Samuel Armando Agreda – AM101220 y Rene Orlando Massana Olivorio - MO100606
+ * Fecha: 5 de diciembre de 2024
+ * Proyecto Final
+ * Materia: Estructura de Datos
+ * Versión: 1.0
+ *
+ * El siguiente programa desarrollado en C++ corresponde a un sistema de registro de estudiantes utiliza sqlite3 
+ * de funcionalidad basica y que puede ser optimizado para incorporlo a un pagina Web.
+ *
+*/
+
 #include <iostream>
 #include <string>
 #include <cstdlib> // Para system()
@@ -122,7 +134,7 @@ void verEstudiante() {
         char curso[50];
         int semestre, lab1, lab2, lab3, lab4, exam1, exam2, exam3, exam4;
         sscanf(result.c_str(), "%[^|]|%d|%d|%d|%d|%d|%d|%d|%d|%d",
-               curso, &semestre, &lab1, &lab2, &lab3, &lab4, &exam1, &exam2, &exam3, &exam4);
+            curso, &semestre, &lab1, &lab2, &lab3, &lab4, &exam1, &exam2, &exam3, &exam4);
 
         // Calcular el promedio
         double promedio = (lab1 + lab2 + lab3 + lab4 + exam1 + exam2 + exam3 + exam4) / 8.0;
@@ -132,8 +144,8 @@ void verEstudiante() {
 
         // Mostrar la información
         cout << curso << " | " << semestre << " | " << lab1 << " | " << lab2 << " | " << lab3 << " | " << lab4
-             << " | " << exam1 << " | " << exam2 << " | " << exam3 << " | " << exam4
-             << " | " << promedio << " | " << estado << "\n";
+            << " | " << exam1 << " | " << exam2 << " | " << exam3 << " | " << exam4
+            << " | " << promedio << " | " << estado << "\n";
     }
     pclose(pipe);
 }
@@ -201,9 +213,9 @@ void asignarCurso() {
     }
 
     string sql = "INSERT INTO grades (student_id, course_id, semester, lab1, lab2, lab3, lab4, exam1, exam2, exam3, exam4) VALUES (" +
-                 intACadena(studentId) + ", " + intACadena(courseId) + ", " + intACadena(semester) + ", " +
-                 intACadena(labs[0]) + ", " + intACadena(labs[1]) + ", " + intACadena(labs[2]) + ", " + intACadena(labs[3]) + ", " +
-                 intACadena(exams[0]) + ", " + intACadena(exams[1]) + ", " + intACadena(exams[2]) + ", " + intACadena(exams[3]) + ");";
+                intACadena(studentId) + ", " + intACadena(courseId) + ", " + intACadena(semester) + ", " +
+                intACadena(labs[0]) + ", " + intACadena(labs[1]) + ", " + intACadena(labs[2]) + ", " + intACadena(labs[3]) + ", " +
+                intACadena(exams[0]) + ", " + intACadena(exams[1]) + ", " + intACadena(exams[2]) + ", " + intACadena(exams[3]) + ");";
     string comando = "sqlite3 scorebook_pro.db \"" + sql + "\"";
 
     system(comando.c_str());
@@ -212,7 +224,7 @@ void asignarCurso() {
 
 // Funcion principal
 int main() {
-    crearTablas(); // Crear tablas al iniciar el programa
+    crearTablas(); // Crea las tablas al iniciar el programa
     int opcion;
     while (true) {
         cout << "\n--- Sistema de Gestion Escolar Scorebook Pro ---\n";
